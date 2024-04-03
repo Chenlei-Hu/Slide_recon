@@ -4,16 +4,14 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - numpy=1.23.2=py38h3a7f9d9_0
-  - pandas=1.4.3=py38h47df419_0
-  - matplotlib=3.4.3=py38h578d9bd_1
-  - matplotlib-base=3.4.3=py38hf4fb855_1
-  - matplotlib-inline=0.1.6=py38h06a4308_0
-  - umi_tools=1.1.2=py38hbff2b2d_1
-  - scipy=1.9.0=py38hea3f02b_0
-  - umap-learn=0.5.3=py38h06a4308_0
-  - editdistance=0.6.2=py38h17151c0_2
-  - pip=24.0=pyhd8ed1ab_0
+  - numpy=1.23.2
+  - pandas=1.4.3
+  - matplotlib=3.4.3
+  - scipy=1.9.0
+  - umap-learn=0.5.3
+  - editdistance=0.6.2
+  - umi_tools=1.1.2
   - pip:
     - mappy==2.24
     - seaborn==0.12.2
+
