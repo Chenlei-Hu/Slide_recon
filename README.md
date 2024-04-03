@@ -15,7 +15,7 @@ conda activate recon
 ```
 
 ### Generating diffusion matrix with fastq 
-Need to change 'fq_dir' and 'out_dir' in 'fiducial_seq_blind_whitelist.py'\ 
+Need to change 'fq_dir' and 'out_dir' in 'fiducial_seq_blind_whitelist.py'\
 Also change information in 'qsub_seq_blind.sh'
 
 * I usually do it on UGER. On broad cluster
@@ -35,7 +35,7 @@ python fiducial_seq_blind_whitelist.py  -d <date> -s <sample_name> -r2 V15
 ```
 
 ### Reconstruction with diffusion matrix
-Need to change 'sample_folder' in 'reconstruction_blind.py'\ 
+Need to change 'sample_folder' in 'reconstruction_blind.py'\
 I suggest using multicore to excute
 * If doing reconstruction with Slide-seq
 ```
