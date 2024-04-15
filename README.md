@@ -14,6 +14,7 @@ activate the conda environment with
 conda activate recon
 ```
 
+## Recon
 ### Generating diffusion matrix with fastq 
 Need to change 'fq_dir' and 'out_dir' in 'fiducial_seq_blind_whitelist.py'\
 Also change information in 'qsub_seq_blind.sh'
