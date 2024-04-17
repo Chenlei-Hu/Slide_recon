@@ -1,6 +1,6 @@
 # Slide_recon
 
-Reconstruction for imaging-free spatial transcriptomics
+Reconstruction for imaging-free spatial transcriptomics.
 
 
 ## Getting Started
@@ -48,11 +48,13 @@ python3 reconstruction_blind.py -d <date> -s <sample_name> -a <capture_bead_name
 python3 reconstruction_blind.py -d <date> -s <sample_name> -a <capture_bead_name> -t <fiducial_bead_name> -e tags
 ```
 
-* Default is runing with CPU, but if have GPU
+* Default is runing with CPU, but if have GPU.
+  (GPU can help speed up the algorithm but is not necessary)
 ```
 python3 reconstruction_blind.py -d <date> -s <sample_name> -a <capture_bead_name> -t <fiducial_bead_name> -e <seq_or_tags> -c GPU
 ```
 
 ## Notes
 * I usually save the file with the structure: /.../date/. I will copy fastq file under /.../date/fastq. The output will be in /.../date/sample.
-* 'date' is the folder name of one experiment. 'sample_name' is the name of the sample in the front of the fastq file. 'capture_bead_name' and 'fiducial_bead_name' is name of capture and fiducial beads, but they are just names for saving files and won't affect results. 
+* 'date' is the folder name of one experiment. 'sample_name' is the name of the sample in the front of the fastq file. 'capture_bead_name' and 'fiducial_bead_name' is name of capture and fiducial beads, but they are just names for saving files and won't affect results.
+* The code has been tested on Python 3.11.7
