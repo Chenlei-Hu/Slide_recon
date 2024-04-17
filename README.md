@@ -2,10 +2,7 @@
 
 Reconstruction for imaging-free spatial genomics.
 
-
-## Getting Started
-
-### Environments
+## Environments
 ```
 conda env create -f environment.yml
 ```
