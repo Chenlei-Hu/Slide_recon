@@ -15,7 +15,7 @@ conda activate recon
 ```
 
 ## Demo 
-The concept of diffusion-based recontruction is implemented in '/Demo' with example image and code.
+The concept of diffusion-based recontruction is implemented in '/demo' with example image and code.
 
 ## Reconstruction
 For experimental data of reconstruction with Slide-seq or Slide-tags, the following two files are used to parse the sequencing results and reconstruct bead spatial locations.
