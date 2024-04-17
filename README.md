@@ -13,9 +13,11 @@ activate the conda environment with:
 ```
 conda activate recon
 ```
+Installation might take couple minutes. It is also recommended to check the packages and install needed ones.
 
 ## Demo 
 The concept of diffusion-based recontruction is implemented in '/demo' with example image and code.
+The simulation takes seconds in the demo, while the reconstruction takes around 5 mins for a normal computer.
 
 ## Reconstruction
 For experimental data of reconstruction with Slide-seq or Slide-tags, the following two files are used to parse the sequencing results and reconstruct bead spatial locations.
@@ -76,6 +78,10 @@ The expected return includes:
 * Four png files showing the bead barcode UMI and covered bead distribution.
 * 'CAPTURE_BEAD_recon_loc.csv' file containing reconstructed coordinates for capture beads.
 * 'SAMPLE_UMAP.png' showing the locations. 'SAMPLE_UMAP_density.png' showing the density of reconstruction locations. 'SAMPLE_UMAP_convex.png' showing the shape.
+
+## Scripts for reproducing figures
+Scripts for reporducing figures are under '/Analysis_Figures'. All data is available at the Broad Single Cell Portal:
+singlecell.broadinstitute.org/single_cell/study/SCP2577.
 
 ## Notes
 * I usually save the file with the structure: /.../date/. I will copy fastq file under /.../date/fastq. The output will be in /.../date/sample.
