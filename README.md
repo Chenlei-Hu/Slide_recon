@@ -1,6 +1,6 @@
 # Slide_recon
 
-Reconstruction for imaging-free spatial transcriptomics.
+Reconstruction for imaging-free spatial genomics.
 
 
 ## Getting Started
@@ -9,50 +9,73 @@ Reconstruction for imaging-free spatial transcriptomics.
 ```
 conda env create -f environment.yml
 ```
-activate the conda environment with
+activate the conda environment with:
 ```
 conda activate recon
 ```
 
-## Recon
+## Demo 
+The concept of diffusion-based recontruction is implemented in '/Demo' with example image and code.
+
+## Reconstruction
+For experimental data of reconstruction with Slide-seq or Slide-tags, the following two files are used to parse the sequencing results and reconstruct bead spatial locations.
+
 ### Generating diffusion matrix with fastq 
-Need to change 'fq_dir' and 'out_dir' in 'fiducial_seq_blind_whitelist.py'\
-Also change information in 'qsub_seq_blind.sh'
+Need to change 'fq_dir' and 'out_dir' in 'fiducial_seq_blind_whitelist.py'.\
 
-* I usually do it on UGER. On broad cluster
+* Run in command-line
+```shell
+python fiducial_seq_blind_whitelist.py  -d DATE -s SAMPLE
 ```
-use UGER
-conda activate recon
-qsub qsub_seq_blind.sh
-```
+* The usage of this command
+If using V15 (including both V15A and V15T) for fiducial beads, need to define
+```shell
+usage: fiducial_seq_blind_whitelist.py -d DATE -s SAMPLE [-r2 READ2TYPE]
 
-* Can also excute the python file
+optional arguments:
+  -d DATE, --date DATE  string, name of folder within which contains a '/fastq' folder
+  -s SAMPLE, --sample SAMPLE
+                        string, output folder name that will be created under the date folder
+  -r2  READ2TYPE, --read2type READ2TYPE
+                        string, optional, defaul='V9', type of fiducial beads used. Choose 'V15'
+                        if V15A or V15T beads are used
 ```
-python fiducial_seq_blind_whitelist.py  -d <date> -s <sample_name>
-```
-If using V15 (including both V15A and V15TSO) for fiducial beads, need to define
-```
-python fiducial_seq_blind_whitelist.py  -d <date> -s <sample_name> -r2 V15
-```
+The expected return includes:
+* 'SAMPLE_QC.pdf' file showing the bead barcode rank plots and read distribution plots.
+* 'SAMPLE_blind_raw_reads_filtered.csv.gz' file containing the diffusion matrix in sparse format.
+* 'SAMPLE_blind_statistics_filtered.csv' file with read parsing statistics summary.
+
 
 ### Reconstruction with diffusion matrix
-Need to change 'sample_folder' in 'reconstruction_blind.py'\
-I suggest using multicore to excute
-* If doing reconstruction with Slide-seq
+Need to change 'sample_folder' in 'reconstruction_blind.py'.\
+Using multicore can largely reduce the running time.
+* Run in command-line
+```shell
+python3 reconstruction_blind.py -d DATE -s SAMPLE -a CAPTURE_BEAD -t FIDUCIAL_BEAD -e EXPERIMENT
 ```
-python3 reconstruction_blind.py -d <date> -s <sample_name> -a <capture_bead_name> -t <fiducial_bead_name> -e seq
-```
+* The usage of this command
+Slide-seq or Slide-tags use different flag.
+```shell
+usage: reconstruction_blind.py -d DATE -s SAMPLE -a CAPTURE_BEAD -t FIDUCIAL_BEAD -e EXPTYPE
+                               [-c CORE]   
 
-* If doing reconstruction with Slide-tags
+optional arguments:
+  -d DATE, --date DATE  string, name of folder within which contains a '/fastq' folder
+  -s SAMPLE, --sample SAMPLE
+                        string, output folder name that will be created under the date folder
+  -a  CAPTURE_BEAD, --anchor CAPTURE_BEAD
+                        string, type of capture beads used. Only for naming files
+  -t  FIDUCIAL_BEAD, --target FIDUCIAL_BEAD
+                        string, type of fiducial beads used. Only for naming files
+  -e EXPTYPE, --exptype EXPTYPE
+                        string, 'seq' for Slide-seq and 'tags' for Slide-tags
+  -c CORE, --core CORE
+                        string, optional, default='CPU'. Choose 'GPU' if GPU is available
 ```
-python3 reconstruction_blind.py -d <date> -s <sample_name> -a <capture_bead_name> -t <fiducial_bead_name> -e tags
-```
-
-* Default is runing with CPU, but if have GPU.
-  (GPU can help speed up the algorithm but is not necessary)
-```
-python3 reconstruction_blind.py -d <date> -s <sample_name> -a <capture_bead_name> -t <fiducial_bead_name> -e <seq_or_tags> -c GPU
-```
+The expected return includes:
+* Four png files showing the bead barcode UMI and covered bead distribution.
+* 'CAPTURE_BEAD_recon_loc.csv' file containing reconstructed coordinates for capture beads.
+* 'SAMPLE_UMAP.png' showing the locations. 'SAMPLE_UMAP_density.png' showing the density of reconstruction locations. 'SAMPLE_UMAP_convex.png' showing the shape.
 
 ## Notes
 * I usually save the file with the structure: /.../date/. I will copy fastq file under /.../date/fastq. The output will be in /.../date/sample.
