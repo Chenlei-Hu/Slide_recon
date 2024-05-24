@@ -10,8 +10,8 @@ import gzip
 import argparse
 import numpy as np
 import mappy as mp
-import pandas as pd
 import editdistance
+from functools import partial
 import matplotlib.pyplot as plt
 from collections import Counter
 from multiprocessing import Pool
@@ -41,15 +41,15 @@ def barcode_extract(fq1_file, fq2_file, r2type):
         if len(fq1[1])<46 or len(fq2[1])<46:  
             alignment_stat["Read_too_short"] += 1
             continue
-        R1_bc = fq1[1][:8]+fq1[1][26:32]
-        R1_bumi = fq1[1][33:41] # if R1: 32:40, if V8 or V10: 33:41
+        R1_bc = fq1[1][:8]+fq1[1][26:33]
+        R1_bumi = fq1[1][33:42] # if V5: 32:40, if V8 or V10: 33:41
         R1_UP = fq1[1][8:26]
         R1_poly = fq1[1][42:]
 
         # different Read 2 bead type
         if r2type == 'V9':
-            R2_bc = fq2[1][:8]+fq2[1][26:32]
-            R2_bumi = fq2[1][33:41]
+            R2_bc = fq2[1][:8]+fq2[1][26:33]
+            R2_bumi = fq2[1][33:42]
             R2_UP = fq2[1][8:26]
             R2_poly = fq2[1][42:]
              # check UP site with mismatch < 3bp
@@ -57,8 +57,8 @@ def barcode_extract(fq1_file, fq2_file, r2type):
                 alignment_stat["UP_not_matched"] += 1
                 continue 
         elif r2type == 'V15':
-            R2_bc = fq2[1][:14]
-            R2_bumi = fq2[1][25:33]
+            R2_bc = fq2[1][:15]
+            R2_bumi = fq2[1][25:34]
             R2_UP = fq2[1][15:25]
             R2_poly = fq2[1][34:]
             # check UP site with mismatch < 3bp
@@ -79,7 +79,7 @@ def barcode_extract(fq1_file, fq2_file, r2type):
     return aln_dict, alignment_stat, R1_bc_list, R2_bc_list
 
 
-def bc_rankplot(bc_list,sample,position,qc_pdfs,max_expected_barcodes=100000):
+def bc_rankplot(bc_list,sample,position,qc_pdfs,max_expected_barcodes=1000000):
 
     bc_dict = Counter(bc_list).most_common()
     sub = bc_dict[100:max_expected_barcodes].copy()
@@ -87,6 +87,7 @@ def bc_rankplot(bc_list,sample,position,qc_pdfs,max_expected_barcodes=100000):
     smooth = gaussian_filter1d(x[0], 3)
     peak_idx,_ = find_peaks(-smooth)
     mean_hist = (x[1][1:][peak_idx]+x[1][:-1][peak_idx])/2
+    # mean_hist = mean_hist[-1]
     mean_hist = mean_hist[-1]
 
     bc_wl = [bc for bc in bc_dict if bc[1]>=10**mean_hist].copy()
@@ -172,6 +173,40 @@ def bc_collapsing(aln_dict, R1_bc_list, R2_bc_list, min_reads_R1, min_reads_R2, 
     print(len(aln_dict_new))
                     
     return aln_dict_new, alignment_stat
+    
+
+def bc_collecting(aln_dict, R1_bc_list, R2_bc_list, min_reads_R1, min_reads_R2, alignment_stat):
+    """ 
+    input: dict of barcode without matching
+    output: dict of barcode after filtering 
+    """
+    # filter for reads  to whitelist
+    R1_dict = dict(Counter(R1_bc_list))
+    R1_dict_top = {k: v for k, v in R1_dict.items() if v > min_reads_R1}
+    R1_whitelist = set(R1_dict_top.keys())
+    print("R1 total {}, after filter {}, whitelist {}".format(len(R1_dict),len(R1_dict_top),len(R1_whitelist)))
+    print("read percentage: {}".format(np.sum(list(R1_dict_top.values()))/np.sum(list(R1_dict.values()))))
+    R2_dict = dict(Counter(R2_bc_list))
+    R2_dict_top = {k: v for k, v in R2_dict.items() if v > min_reads_R2}
+    R2_whitelist = set(R2_dict_top.keys())
+    print("R2 total {}, after filter {}, whitelist {}".format(len(R2_dict),len(R2_dict_top),len(R2_whitelist)))
+    print("read percentage: {}".format(np.sum(list(R2_dict_top.values()))/np.sum(list(R2_dict.values()))))
+
+    # generate dict with matched bc
+    aln_dict_new = {}
+    idx = 0
+    for bc_R1 in aln_dict:
+        idx += 1
+        if bc_R1 in R1_whitelist:
+            for R2 in range(len(aln_dict[bc_R1])):
+                bc_R2 = aln_dict[bc_R1][R2][0]
+                if bc_R2 in R2_whitelist:
+                    alignment_stat["after_filter_reads"] += 1
+                    aln_dict_new.setdefault(bc_R1,[]).append(
+                        (bc_R2,aln_dict[bc_R1][R2][1],aln_dict[bc_R1][R2][2])) 
+    print(len(aln_dict_new))
+                    
+    return aln_dict_new, alignment_stat
 
 
 def write_blind(aln_dict_new, alignment_stat, sample, out_dir):
@@ -192,7 +227,7 @@ def write_blind(aln_dict_new, alignment_stat, sample, out_dir):
     with open(os.path.join(out_dir,(sample+"_blind_statistics_filtered.csv")),"w") as f:
         f.write("alignment_status,counts\n")
         for aln_stat in alignment_stat:
-            f.write("{},{}\n".format(aln_stat, alignment_stat[aln_stat]) )
+            f.write("{},{}\n".format(aln_stat, alignment_stat[aln_stat]))
 
 
 def get_args():
@@ -240,12 +275,19 @@ if __name__ == '__main__':
 
     qc_pdf_file = os.path.join(out_dir, args.sample+'_QC.pdf')
     qc_pdfs = PdfPages(qc_pdf_file)
-    R1_threshold = bc_rankplot(R1_bc_list,args.sample,'R1',qc_pdfs,max_expected_barcodes=100000)
-    R2_threshold = bc_rankplot(R2_bc_list,args.sample,'R2',qc_pdfs,max_expected_barcodes=100000)
+    R1_threshold = bc_rankplot(R1_bc_list,args.sample,'R1',qc_pdfs,max_expected_barcodes=1000000)
+    R2_threshold = bc_rankplot(R2_bc_list,args.sample,'R2',qc_pdfs,max_expected_barcodes=1000000)
     qc_pdfs.close()
 
     # R1_threshold = 50
     # R2_threshold = 50
 
-    aln_dict_new, stat_new = bc_collapsing(aln_dict, R1_bc_list, R2_bc_list, min_reads_R1=R1_threshold, min_reads_R2=R2_threshold, alignment_stat = stat)
+    # if do barcode collapsing
+    # aln_dict_new, stat_new = bc_collapsing(aln_dict, R1_bc_list, R2_bc_list, min_reads_R1=R1_threshold
+    #                                        , min_reads_R2=R2_threshold, alignment_stat = stat)
+    
+    # if no barcode collapsing
+    aln_dict_new, stat_new = bc_collecting(aln_dict, R1_bc_list, R2_bc_list, min_reads_R1=R1_threshold
+                                           , min_reads_R2=R2_threshold, alignment_stat = stat)
+
     write_blind(aln_dict_new, stat_new, args.sample, out_dir)

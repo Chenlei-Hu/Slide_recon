@@ -41,10 +41,10 @@ def blind_cover_bc_distribution(bead_cover_bc, bead_type):
 
 # generate spase matrix from matching, with selection on anchor or target
 def get_matrix(match_df,min_a_cnt,max_a_cnt, min_t_cnt,max_t_cnt, anchor, target):
-    a_all = match_df.groupby(anchor)['cnt'].sum().reset_index(name='total_cnt')  
-    a_sel = a_all.loc[(a_all['total_cnt']>min_a_cnt) & (a_all['total_cnt']<max_a_cnt),]
-    t_all = match_df.groupby(target)['cnt'].sum().reset_index(name='total_cnt')  
-    t_sel = t_all.loc[(t_all['total_cnt']>min_t_cnt) & (t_all['total_cnt']<max_t_cnt),]
+    a_all = match_df.groupby(anchor)['cnt'].size().reset_index(name='bead_cnt')   
+    a_sel = a_all.loc[(a_all['bead_cnt']>min_a_cnt) & (a_all['bead_cnt']<max_a_cnt),]
+    t_all = match_df.groupby(target)['cnt'].size().reset_index(name='bead_cnt')  
+    t_sel = t_all.loc[(t_all['bead_cnt']>min_t_cnt) & (t_all['bead_cnt']<max_t_cnt),]
     match_df = match_df[(match_df[anchor].isin(a_sel[anchor])) & (match_df[target].isin(t_sel[target]))]
     a_list = match_df.groupby(anchor)['cnt'].sum().reset_index(name='total_cnt') 
     t_list = match_df.groupby(target)['cnt'].sum().reset_index(name='total_cnt') 
@@ -61,7 +61,7 @@ def get_matrix(match_df,min_a_cnt,max_a_cnt, min_t_cnt,max_t_cnt, anchor, target
     [a_coo.append(a_dict[a]) for a in match_df[anchor]]
     [t_coo.append(t_dict[t]) for t in match_df[target]]
     counts_coo = sp.coo_matrix((match_df['cnt'], (a_coo, t_coo)))
-    counts = counts_coo.tocsr().toarray()
+    counts = counts_coo.tocsr()
     return counts, a_list, t_list
 
 def ot_random_ref(n):
@@ -156,9 +156,9 @@ blind_cover_bc_distribution(t_cover_bc, target)
 # generate matrix and reconstruction with CPU
 if args.core == 'CPU':
     a_min = 0
-    a_max = 1000000
+    a_max = 1000
     t_min = 0
-    t_max = 1000000
+    t_max = 1000
 
     counts, a_sel, t_sel = get_matrix(blind_sum, min_a_cnt=a_min, max_a_cnt=a_max, min_t_cnt=t_min, max_t_cnt=t_max, anchor=anchor, target=target)
 
@@ -217,7 +217,7 @@ elif args.core == 'GPU':
     from cuml.manifold.umap import UMAP as cuUMAP
     min_list = [0,50,100]
     min_dist_list = [0.3,0.99]
-    n_epo_list = [10000,100000]
+    n_epo_list = [100000]
     for m in min_list:
         for md in min_dist_list:
             for nepo in n_epo_list:
