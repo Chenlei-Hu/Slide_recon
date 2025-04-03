@@ -1,6 +1,8 @@
 # Slide_recon
 
 Reconstruction for imaging-free spatial genomics.
+An updated version for faster reconstruction of larger area: 
+https://github.com/MacoskoLab/Macosko-Pipelines/tree/main/reconstruction 
 
 ## Environments
 ```
